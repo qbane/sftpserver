@@ -2725,11 +2725,54 @@ static char *input(const char *prompt, FILE *fp) {
   return sftp_xstrdup(buffer);
 }
 
+#ifdef HAVE_READLINE
+static char *command_name_generator(const char *text, int state) {
+  static int lidx, len;
+
+  if (state == 0) {
+    lidx = 0;
+    len = strlen(text);
+  }
+
+  const struct command *cmd;
+  while ((cmd = commands + (lidx++))->name != NULL) {
+    if (strncmp(cmd->name, text, len) == 0) {
+      return strdup(cmd->name);
+    }
+  }
+  return NULL;
+}
+
+static char **command_name_completion(
+  const char *text,
+  int start,
+  int attribute((unused)) end) {
+
+  rl_attempted_completion_over = 1;
+  char* before = rl_copy_text(0, start);
+  int idx = 0;
+  while (before[idx]) {
+    if (!whitespace(before[idx++])) {
+      free(before);
+      return NULL;
+    }
+  }
+
+  free(before);
+  return rl_completion_matches(text, command_name_generator);
+}
+#endif
+
 /* Input processing loop */
 static void process(const char *prompt, FILE *fp) {
   char *line;
   int ac, n, rc;
   char *avbuf[256], **av;
+
+#ifdef HAVE_READLINE
+  rl_readline_name = "sftpclient";
+  rl_attempted_completion_function = command_name_completion;
+#endif
 
   while((line = input(prompt, fp))) {
     ++inputline;
