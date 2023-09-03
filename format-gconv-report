@@ -29,7 +29,7 @@ def sgmlquotechar(c):
     return c
 
 def sgmlquote(s):
-  return string.join(map(sgmlquotechar, s),'')
+  return ''.join(map(sgmlquotechar, s))
 
 percent = {}
 total_lines = 0

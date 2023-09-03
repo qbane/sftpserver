@@ -95,6 +95,9 @@ while len(args) > 0 and args[0][0] == '-':
 server = os.path.abspath(server)
 client = os.path.abspath(client)
 
+# locale should be fixed to match the expected strings
+clientenv = {**os.environ, 'LC_ALL': 'C'}
+
 if len(args) > 0:
     tests = args
 else:
@@ -162,9 +165,10 @@ for test in tests:
         # Run the client
         output = Popen(clientcmd,
                        stdout=PIPE,
-                       stderr=STDOUT).communicate()[0].split(b'\n')
+                       stderr=STDOUT,
+                       env=clientenv).communicate()[0].split(b'\n')
         # Get the output, with newlines stripped
-        output = [str(s, "ASCII") for s in output]
+        output = [s.decode() for s in output]
         if output[len(output)-1] == "":
             output = output[:-1]
         # Get the script, with newlines stripped
