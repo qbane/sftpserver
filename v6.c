@@ -183,6 +183,22 @@ uint32_t sftp_v6_version_select(struct sftpjob *job) {
   return HANDLER_RESPONDED; /* even though we sent nothing */
 }
 
+static uint32_t sftp_qbane_watch(struct sftpjob *job) {
+  char* subcommand;
+  char* path;
+
+  pcheck(sftp_parse_string(job, &subcommand, 0));
+  pcheck(sftp_parse_string(job, &path, 0));
+
+  if (strcmp(subcommand, "add") == 0) {
+    sftp_send_status(job, SSH_FX_OK, "OK");
+  } else {
+    sftp_send_status(job, SSH_FX_INVALID_PARAMETER, "unknown watch subcommand");
+  }
+
+  return HANDLER_RESPONDED;
+}
+
 static const struct sftpcmd sftpv6tab[] = {
     {SSH_FXP_INIT, sftp_vany_already_init},
     {SSH_FXP_OPEN, sftp_v56_open},
@@ -218,6 +234,7 @@ static const struct sftpextension sftp_v6_extensions[] = {
     {"version-select", "", sftp_v6_version_select},
     {"statvfs@openssh.com", "2", sftp_vany_statvfs},
     {"fstatvfs@openssh.com", "2", sftp_vany_fstatvfs},
+    {"watch@qbane.me", "1", sftp_qbane_watch},
 };
 
 const struct sftpprotocol sftp_v6 = {

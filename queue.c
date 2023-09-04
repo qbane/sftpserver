@@ -29,6 +29,8 @@
 #include "thread.h"
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <errno.h>
 
 /** @brief One job in a queue */
 struct queuejob {
@@ -64,6 +66,9 @@ struct queue {
 
   /** @brief Set when queue is being destroyed */
   int join;
+
+  int watcher_fd_in;
+  int watcher_fd_out;
 };
 
 /** @brief Implementation of worker thread
@@ -108,6 +113,46 @@ void queue_init(struct queue **qr, const struct queuedetails *details,
 
   q = sftp_xmalloc(sizeof *q);
   sftp_memset(q, 0, sizeof *q);
+
+  int fds_child[2];
+  int fds_parent[2];
+
+  if (pipe(fds_child) == -1 || pipe(fds_parent) == -1) {
+    sftp_fatal("error on pipe(): %s", strerror(errno));
+  }
+
+  switch (fork()) {
+    case -1:
+      sftp_fatal("error on fork() to create watcher: %s", strerror(errno));
+    case 0:  // child
+      close(fds_child[1]);
+      close(fds_parent[0]);
+      dup2(fds_child[0], STDIN_FILENO);
+      dup2(fds_parent[1], STDOUT_FILENO);
+      close(fds_child[0]);
+      close(fds_parent[1]);
+      const char *prgname = "./watcher.py";
+      execv(prgname, (char *const[]){(char*)prgname, NULL});
+      sftp_fatal("error on execv: %s", strerror(errno));
+  }
+
+  // parent
+  close(fds_child[0]);
+  close(fds_parent[1]);
+  q->watcher_fd_in = fds_child[1];
+  q->watcher_fd_out = fds_parent[0];
+
+  if (write(q->watcher_fd_in, "hello world\n", 12) < 0) {
+    sftp_fatal("error on write() to watcher: %s", strerror(errno));
+  }
+
+  char buf[1024];
+  int nread;
+  if ((nread = read(q->watcher_fd_out, buf, 1024)) == -1) {
+    sftp_fatal("error on read() from watcher: %s", strerror(errno));
+  }
+  fprintf(stderr, "watcher returns: [%*s]\n", nread, buf);
+
   q->jobs = 0;
   q->jobstail = &q->jobs;
   ferrcheck(pthread_mutex_init(&q->m, 0));
@@ -138,6 +183,10 @@ void queue_destroy(struct queue *q) {
   int n;
 
   if(q) {
+    fprintf(stderr, "queue cleanup...\n");
+    close(q->watcher_fd_in);
+    close(q->watcher_fd_out);
+
     ferrcheck(pthread_mutex_lock(&q->m));
     q->join = 1;
     ferrcheck(pthread_cond_broadcast(&q->c)); /* all threads */

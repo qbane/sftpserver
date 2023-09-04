@@ -2242,6 +2242,23 @@ static int cmd_unsupported(int attribute((unused)) ac,
   return 0;
 }
 
+static int cmd_watch_add(int attribute((unused)) ac,
+                         char attribute((unused)) * *av,
+                         unsigned attribute((unused)) options) {
+  uint32_t id;
+
+  sftp_send_begin(&fakeworker);
+  sftp_send_uint8(&fakeworker, SSH_FXP_EXTENDED);
+  sftp_send_uint32(&fakeworker, (id = newid())); /* id */
+  sftp_send_string(&fakeworker, "watch@qbane.me");
+  sftp_send_string(&fakeworker, "add");
+  sftp_send_string(&fakeworker, "/home/qbane/sftpserver/owo");
+  sftp_send_end(&fakeworker);
+  getresponse(SSH_FXP_STATUS, id, "_watch_add");
+  status();
+  return 0;
+}
+
 static int cmd_ext_unsupported(int attribute((unused)) ac,
                                char attribute((unused)) * *av,
                                unsigned attribute((unused)) options) {
@@ -2619,6 +2636,7 @@ static const struct command commands[] = {
     {"_overlap", 0, 0, 0, cmd_overlap, "", "test overlapping writes"},
     {"_unsupported", 0, 0, 0, cmd_unsupported, 0,
      "send an unsupported command"},
+    {"_watch_add", 0, 0, 0, cmd_watch_add, 0, "add a watch to directory"},
     {"binary", 0, 0, 0, cmd_binary, 0, "binary mode"},
     {"bye", 0, 0, 0, cmd_quit, 0, "quit"},
     {"cd", 0, 1, 1, cmd_cd, "DIR", "change remote directory"},

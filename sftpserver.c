@@ -267,6 +267,9 @@ static uint32_t sftp_init(struct sftpjob *job) {
     /* Just in case l-) */
     sftp_send_string(job->worker, "link-order@rjk.greenend.org.uk");
     sftp_send_string(job->worker, "linkpath-targetpath");
+
+    sftp_send_string(job->worker, "watch@qbane.me");
+    sftp_send_string(job->worker, "1");
   }
   sftp_send_end(job->worker);
   if(protocol->version < 6) {
