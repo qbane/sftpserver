@@ -17,14 +17,14 @@
 # USA
 
 # Process this file with autoconf to produce a configure script.
-AC_INIT(sftpserver, 2, rjk@greenend.org.uk)
+AC_INIT([sftpserver],[2],[rjk@greenend.org.uk])
 AC_CONFIG_AUX_DIR([config.aux])
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([alloc.c])
-AM_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
 AC_PROG_CC
-AC_SET_MAKE
+AC_PROG_MAKE_SET
 
 #AC_PROG_LIBTOOL
 #AC_LIBTOOL_DLOPEN
