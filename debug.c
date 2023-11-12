@@ -75,7 +75,7 @@ void sftp_debug_hexdump(const void *ptr, size_t n) {
     output += 2;
     for(j = 0; j < 16; ++j)
       if(i + j < n)
-        *output++ = isprint(p[i + j]) ? p[i + j] : '.';
+        *output++ = (isprint(p[i + j]) && p[i + j] < 0x7f) ? p[i + j] : '.';
     *output++ = '\n';
     *output = 0;
     fputs(buffer, debugfp);
