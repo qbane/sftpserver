@@ -41,6 +41,7 @@ AC_CHECK_LIB([socket],[socket])
 AC_CHECK_LIB([readline],[readline],
              [AC_SUBST([LIBREADLINE],[-lreadline])
               AC_DEFINE([HAVE_READLINE],[1],[define if you have a readline library])])
+AC_CHECK_LIB([readline],[rl_copy_text])
 RJK_ICONV
 AC_DEFINE([_GNU_SOURCE], [1], [required for e.g. strsignal])
 AC_C_INLINE
