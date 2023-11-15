@@ -57,6 +57,13 @@
 #    define NTHREADS 4
 #  endif
 
+/* If true, operate in websocat-compatible mode.
+   For use in conjunction with "lengthprefix:" overlay in websocat.
+   See websocat's doc for detail.
+   Prefix all outgoing messages with their length in uint32BE.
+   Also expect incoming messages to be formatted in the same way. */
+extern int websocat_compatible;
+
 /** @brief Send an @ref SSH_FXP_STATUS message
  * @param job Job
  * @param status Status code

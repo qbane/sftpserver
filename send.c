@@ -93,6 +93,14 @@ void sftp_send_end(struct worker *w) {
     D(("%s:", sendtype));
     sftp_debug_hexdump(w->buffer + 4, w->bufused - 4);
   }
+
+  if (websocat_compatible) {
+    uint32_t buf_prefix = htonl(w->bufused);
+    if ((n = write(sftpout, &buf_prefix, 4)) != 4) {
+      sftp_fatal("error sending response prefix: %s", strerror(errno));
+    }
+  }
+
   /* Write the whole buffer, coping with short writes */
   written = 0;
   while((size_t)written < w->bufused)

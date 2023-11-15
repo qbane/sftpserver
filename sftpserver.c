@@ -82,7 +82,13 @@ static const struct queuedetails workqueue_details = {
 const struct sftpprotocol *protocol = &sftp_preinit;
 const char sendtype[] = "response";
 
+int websocat_compatible;
+
 /* Options */
+
+enum {
+  OPT_WEBSOCAT_COMPATIBLE = 256,
+};
 
 static const struct option options[] = {
     {"help", no_argument, 0, 'h'},
@@ -99,6 +105,7 @@ static const struct option options[] = {
     {"ipv4", no_argument, 0, '4'},
     {"ipv6", no_argument, 0, '6'},
 #endif
+    {"websocat", no_argument, 0, OPT_WEBSOCAT_COMPATIBLE},
     {"readonly", no_argument, 0, 'R'},
     {0, 0, 0, 0}};
 
@@ -121,6 +128,7 @@ static void attribute((noreturn)) help(void) {
                "  -4|-6                    Force IPv4 or IPv6 for --listen\n"
                "  --background, -b         Daemonize\n"
 #endif
+               "  --websocat               Transmit length-prefixed messages\n"
                "  --readonly, -R           Read-only mode\n");
   exit(0);
 }
@@ -498,6 +506,9 @@ int main(int argc, char **argv) {
     case 'C':
       config = optarg;
       break;
+    case OPT_WEBSOCAT_COMPATIBLE:
+      websocat_compatible = 1;
+      break;
     default:
       exit(1);
     }
@@ -664,6 +675,14 @@ static void sftp_service(void) {
   umask(0);
   while(sftp_state_get() != sftp_state_stop &&
         !sftp_xread(0, &len, sizeof len)) {
+
+    if (websocat_compatible) {
+      /* discard the prefix and read again */
+      if (sftp_xread(0, &len, sizeof len)) {
+        break;
+      }
+    }
+
     job = sftp_xmalloc(sizeof *job);
     job->len = ntohl(len);
     if(!job->len || job->len > MAXREQUEST)

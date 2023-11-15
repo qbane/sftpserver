@@ -132,6 +132,9 @@ static int forceversion;
 
 static char *sftp_realpath(const char *path);
 
+/* used in server; unused in client. */
+int websocat_compatible;
+
 enum {
   OPT_QUIRK_REVERSE_SYMLINK = 256,
   OPT_STOP_ON_ERROR,
